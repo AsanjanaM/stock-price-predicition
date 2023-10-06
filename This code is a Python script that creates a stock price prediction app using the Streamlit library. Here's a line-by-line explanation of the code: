@@ -1,0 +1,71 @@
+import streamlit as st: Imports the Streamlit library, which is used to create web applications with Python.
+
+import pandas as pd: Imports the pandas library, which is used for data manipulation and analysis.
+
+from sklearn.linear_model import LinearRegression: Imports the LinearRegression class from the scikit-learn library, which is used for machine learning tasks.
+
+from sklearn.model_selection import train_test_split: Imports the train_test_split function from scikit-learn, which is used to split the data into training and testing sets.
+
+from sklearn.metrics import mean_squared_error: Imports the mean_squared_error function from scikit-learn, which is used to evaluate the performance of the model.
+
+import yfinance as yf: Imports the yfinance library, which is used to fetch stock data from Yahoo Finance.
+
+import matplotlib as mp: Imports the matplotlib library, which is used for data visualization.
+
+from plotly import graph_objs as go: Imports the graph_objs module from the plotly library, which is used for interactive data visualization.
+
+st.title("Stock Price Prediction App"): Sets the title of the web application to "Stock Price Prediction App" using the Streamlit title function.
+
+option = st.sidebar.selectbox('Select one symbol', ('AAPL', 'MSFT',"SPY",'WMT','GME','MU','NFLX','BNOX')): Creates a dropdown menu in the sidebar of the web application where the user can select a stock symbol.
+
+today = datetime.date.today(): Gets the current date.
+
+before = today - datetime.timedelta(days=700): Calculates the date 700 days before the current date.
+
+start_date = st.sidebar.date_input('Start date', before): Creates a date input field in the sidebar where the user can select the start date for the stock data.
+
+end_date = st.sidebar.date_input('End date', today): Creates a date input field in the sidebar where the user can select the end date for the stock data.
+
+stock_data = yf.download(option, start='2010-01-01', end='2023-10-06'): Fetches the stock data for the selected stock symbol and specified date range using the yfinance library.
+
+stock_data['Date'] = stock_data.index: Adds a new column called 'Date' to the stock_data DataFrame and sets it as the index of the DataFrame.
+
+stock_data['Date'] = stock_data['Date'].apply(lambda x: x.toordinal()): Converts the dates in the 'Date' column to ordinal values using the toordinal method.
+
+X = stock_data[['Date']]: Creates a DataFrame X containing the 'Date' column as the input feature for the linear regression model.
+
+y = stock_data['Close']: Creates a Series y containing the 'Close' column as the target variable for the linear regression model.
+
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=0): Splits the data into training and testing sets using the train_test_split function. The training set consists of 80% of the data, and the testing set consists of 20% of the data.
+
+model = LinearRegression(): Creates an instance of the LinearRegression model.
+
+model.fit(X_train, y_train): Trains the linear regression model using the training data.
+
+prediction_days = 30: Sets the number of days for which the stock prices will be predicted.
+
+prediction_dates = pd.date_range(start=stock_data.index[-1], periods=prediction_days+1, closed='right'): Generates a range of dates starting from the last date in the stock_data DataFrame for the specified number of prediction days.
+
+prediction_dates = prediction_dates[1:]: Excludes the last date from the range of prediction dates.
+
+prediction_dates_ord = prediction_dates.to_series().apply(lambda x: x.toordinal()): Converts the prediction dates to ordinal values.
+
+predictions = model.predict(prediction_dates_ord.values.reshape(-1, 1)): Makes predictions for the stock prices using the trained linear regression model.
+
+st.subheader("Actual Stock Prices:"): Displays the subheader "Actual Stock Prices" using the Streamlit subheader function.
+
+st.line_chart(stock_data['Close']): Displays a line chart of the actual stock prices using the Streamlit line_chart function.
+
+st.subheader("Predicted Stock Prices:"): Displays the subheader "Predicted Stock Prices" using the Streamlit subheader function.
+
+predicted_data = pd.DataFrame({'Date': prediction_dates, 'Close': predictions}): Creates a DataFrame predicted_data containing the prediction dates and corresponding predicted stock prices.
+
+st.line_chart(predicted_data.set_index('Date')): Displays a line chart of the predicted stock prices using the Streamlit line_chart function.
+
+st.subheader("Actual vs. Predicted Stock Prices:"): Displays the subheader "Actual vs. Predicted Stock Prices" using the Streamlit subheader function.
+
+combined_data = pd.concat([stock_data['Close'], predicted_data.set_index('Date')['Close']], axis=1): Concatenates the actual stock prices and predicted stock prices into a single DataFrame.
+
+combined_data.columns = ['Actual', 'Predicted']: Renames the columns of the combined_data DataFrame to 'Actual' and 'Predicted'.
+
+st.line_chart(combined_data): Displays a line chart of the actual and predicted stock prices together using the Streamlit line_chart function.
